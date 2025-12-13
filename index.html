@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Alê Semijoias</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    * { box-sizing: border-box; font-family: Arial, sans-serif; }
+    body { margin: 0; background: #f4f4f4; }
+
+    header {
+      background: #111827;
+      color: #fff;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    header h1 { margin: 0; font-size: 20px; }
+
+    nav button {
+      margin-left: 8px;
+      background: #22c55e;
+      border: none;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .container { padding: 15px; }
+
+    .filtros {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+    }
+    .filtros select, .filtros input {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .produtos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 15px;
+    }
+    .produto {
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .produto img {
+      width: 100%;
+      border-radius: 8px;
+    }
+    .produto button {
+      background: #2563eb;
+      border: none;
+      color: #fff;
+      padding: 7px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .carrinho { display: none; background: #fff; padding: 15px; border-radius: 10px; }
+    .carrinho ul { list-style: none; padding: 0; }
+    .carrinho li { display: flex; justify-content: space-between; margin-bottom: 8px; }
+
+    .whatsapp {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #25D366;
+      width: 60px;
+      height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .whatsapp img { width: 32px; }
+
+    @media (max-width: 600px) {
+      header { flex-direction: column; align-items: flex-start; }
+      nav { margin-top: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Alê Semijoias</h1>
+  <nav>
+    <button onclick="mostrarProdutos()">Produtos</button>
+    <button onclick="mostrarCarrinho()">Carrinho</button>
+    <button onclick="mostrarCompras()">Minhas Compras</button>
+  </nav>
+</header>
+
+<div class="container">
+
+  <div class="filtros" id="filtros">
+    <select id="filtroCategoria" onchange="filtrar()">
+      <option value="">Categoria</option>
+      <option value="colar">Colar</option>
+      <option value="choker">Choker</option>
+      <option value="brinco">Brinco</option>
+    </select>
+
+    <input type="text" id="busca" placeholder="Buscar produto" onkeyup="filtrar()" />
+  </div>
+
+  <div id="listaProdutos" class="produtos"></div>
+  <div id="carrinho" class="carrinho"></div>
+  <div id="compras" class="carrinho"></div>
+
+  <div id="pix" class="carrinho"></div>
+</div>
+
+<a href="#" onclick="enviarWhatsApp()" class="whatsapp">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" />
+</a>
+
+<script>
+  const CHAVE_PIX = '26293648870'; // CPF como chave Pix
+  const WHATSAPP_NUMERO = '5516997787847'; // TROQUE PELO SEU WHATSAPP
+
+  const produtos = [
+    { nome: 'Elo Oval Fininho', preco: 45, categoria: 'colar' },
+    { nome: 'Choker Infinito', preco: 60, categoria: 'choker' }
+  ];
+
+  let carrinho = [];
+  let compras = [];
+
+  function renderProdutos(lista) {
+    const div = document.getElementById('listaProdutos');
+    div.innerHTML = '';
+    lista.forEach(p => {
+      div.innerHTML += `
+        <div class="produto">
+          <img src="https://via.placeholder.com/300" />
+          <h3>${p.nome}</h3>
+          <p>R$ ${p.preco.toFixed(2)}</p>
+          <button onclick="adicionarCarrinho('${p.nome}', ${p.preco})">Adicionar</button>
+        </div>`;
+    });
+  }
+
+  function filtrar() {
+    const cat = document.getElementById('filtroCategoria').value;
+    const busca = document.getElementById('busca').value.toLowerCase();
+    const filtrados = produtos.filter(p =>
+      (!cat || p.categoria === cat) && p.nome.toLowerCase().includes(busca)
+    );
+    renderProdutos(filtrados);
+  }
+
+  function adicionarCarrinho(nome, preco) {
+    carrinho.push({ nome, preco });
+    alert('Produto adicionado ao carrinho');
+  }
+
+  function mostrarCarrinho() {
+    esconderTudo();
+    const div = document.getElementById('carrinho');
+    div.style.display = 'block';
+    let total = 0;
+    div.innerHTML = '<h2>Meu Carrinho</h2><ul>';
+    carrinho.forEach((i, index) => {
+      total += i.preco;
+      div.innerHTML += `<li>${i.nome} - R$ ${i.preco.toFixed(2)} <button onclick="remover(${index})">❌</button></li>`;
+    });
+    div.innerHTML += `</ul><h3>Total: R$ ${total.toFixed(2)}</h3><button onclick="mostrarPix(${total})">Pagar com Pix</button>`;
+  }
+
+  function remover(i) {
+    carrinho.splice(i, 1);
+    mostrarCarrinho();
+  }
+
+  function mostrarPix(valor) {
+    esconderTudo();
+    const div = document.getElementById('pix');
+    div.style.display = 'block';
+    div.innerHTML = `
+      <h2>Pagamento via Pix</h2>
+      <p><strong>Valor:</strong> R$ ${valor.toFixed(2)}</p>
+      <p><strong>Chave Pix (CPF):</strong><br><span style="font-size:18px;">${CHAVE_PIX}</span></p>
+      <p>Após pagar, clique abaixo e envie o comprovante.</p>
+      <button onclick="enviarPixWhatsApp(${valor})">Enviar comprovante no WhatsApp</button>
+    `;
+  }
+
+  function enviarPixWhatsApp(valor) {
+    const msg = `Olá! Já fiz o pagamento via Pix.%0AValor: R$ ${valor.toFixed(2)}%0AChave Pix: ${CHAVE_PIX}%0AEstou enviando o comprovante.`;
+    window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${msg}`, '_blank');
+  }
+
+  function finalizarCompra() {
+    compras.push(...carrinho);
+    carrinho = [];
+    mostrarCompras();
+  }
+
+  function mostrarCompras() {
+    esconderTudo();
+    const div = document.getElementById('compras');
+    div.style.display = 'block';
+    div.innerHTML = '<h2>Minhas Compras</h2><ul>';
+    compras.forEach(i => {
+      div.innerHTML += `<li>${i.nome} - R$ ${i.preco.toFixed(2)}</li>`;
+    });
+    div.innerHTML += '</ul>';
+  }
+
+  function mostrarProdutos() {
+    esconderTudo();
+    document.getElementById('listaProdutos').style.display = 'grid';
+    document.getElementById('filtros').style.display = 'flex';
+  }
+
+  function esconderTudo() {
+    document.getElementById('listaProdutos').style.display = 'none';
+    document.getElementById('carrinho').style.display = 'none';
+    document.getElementById('compras').style.display = 'none';
+    document.getElementById('pix').style.display = 'none';
+    document.getElementById('filtros').style.display = 'none';
+  }
+
+  function enviarWhatsApp() {
+    if (carrinho.length === 0) return alert('Carrinho vazio');
+    let msg = 'Olá, fiz este pedido:%0A';
+    let total = 0;
+    carrinho.forEach(i => { total += i.preco; msg += `- ${i.nome} (R$ ${i.preco.toFixed(2)})%0A`; });
+    msg += `%0ATotal: R$ ${total.toFixed(2)}`;
+    window.open(`https://wa.me/${WHATSAPP_NUMERO}?text=${msg}`, '_blank');
+  }
+
+  renderProdutos(produtos);
+</script>
+
+</body>
+</html>
